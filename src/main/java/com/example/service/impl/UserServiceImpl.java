@@ -1,5 +1,6 @@
 package com.example.service.impl;
 
+import com.example.annotation.DefaultExceptionMessage;
 import com.example.dto.ProjectDTO;
 import com.example.dto.TaskDTO;
 import com.example.dto.UserDTO;
@@ -82,6 +83,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @DefaultExceptionMessage(defaultMessage = "Delete user is failed")
     public void delete(String username) throws TicketingProjectException {
 
         User user = userRepository.findByUserNameAndIsDeleted(username, false);
