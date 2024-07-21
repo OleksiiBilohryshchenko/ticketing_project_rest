@@ -50,7 +50,7 @@ class ProjectControllerTest {
                 "",
                 true,
                 "",
-                new RoleDTO(2L,"Manager"),
+                new RoleDTO(2L, "Manager"),
                 Gender.MALE);
 
         project = new ProjectDTO(
@@ -91,17 +91,33 @@ class ProjectControllerTest {
     }
 
     @Test
-    void givenToken_createProject(){
+    void givenToken_createProject() throws Exception {
 
         mvc.perform(MockMvcRequestBuilders.post("/api/v1/project")
-                .header("Authprization", token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content()
-        )
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(toJsonString(project)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").value("Project is successfully created"));
 
     }
 
+    @Test
+    void givenToken_updateProject() throws Exception {
+
+        project.setProjectName("API Project - 2");
+
+        mvc.perform(MockMvcRequestBuilders.put("/api/v1/project")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(toJsonString(project)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Project is successfully updated"));
+    }
+
+    // converting Json to String
     private String toJsonString(final Object obj) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
