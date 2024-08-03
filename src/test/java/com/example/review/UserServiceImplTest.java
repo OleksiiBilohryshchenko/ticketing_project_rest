@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -137,11 +138,17 @@ public class UserServiceImplTest {
         List<UserDTO> actualList = userService.listAllUsers();
 
         //then part - Assertion/Verification
-        assertEquals(expectedList, actualList); // -> checking the data or the obj inside of Lists, but it cannot check the data of the obj in this lists
+//        assertEquals(expectedList, actualList); // -> checking the data or the obj inside of Lists, but it cannot check the data of the obj in this lists
         // expected list obj1, obj2 - actual list obj3, obj4, without @EqualsAndHashCode it will not except as an equal
 
         //assertEquals(new User(), new User()); // comparing addresses of obj with ==,
         // will work if we add @EqualsAndHashCode on the top of a class whose objects we are going to test.
+
+        //AssertJ             usingRecursiveComparison -> will except obj as equal even without @EqualsAndHashCode
+        assertThat(actualList).usingRecursiveComparison().isEqualTo(expectedList);
+
+        verify(userRepository, times(1)).findAllByIsDeletedOrderByFirstNameDesc(false);
+        verify(userRepository, never()).findAllByIsDeletedOrderByFirstNameDesc(true);
 
     }
 

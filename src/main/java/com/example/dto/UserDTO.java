@@ -12,7 +12,7 @@ import javax.validation.constraints.*;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode
+//@EqualsAndHashCode
 public class UserDTO {
 
     private Long id;
