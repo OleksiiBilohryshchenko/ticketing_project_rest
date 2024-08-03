@@ -17,7 +17,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 // three components of JUnit5 -> Platform, Jupiter, Vintage (adopt previous JUnit versions @)
 @ExtendWith(MockitoExtension.class) //Junit is a framework -> we can use it in a combination with other libraries.
 // To be able to use Mockito library, we need extend it with @ExtendWith.
@@ -86,6 +90,22 @@ public class UserServiceImplTest {
         userDTO.setRole(roleDTO);
     }
 
+    private List<User> getUsers(){
+        User user2 = new User();
+        user2.setId(2L);
+        user.setFirstName("Emily");
+
+        return List.of(user, user2);
+    }
+
+    private List<UserDTO> getUserDTOs(){
+        UserDTO userDTO2 = new UserDTO();
+        userDTO2.setId(2L);
+        userDTO2.setFirstName("Emily");
+
+        return List.of(userDTO, userDTO2);
+    }
+
     @AfterEach
     public void tearDown() throws Exception{
         // some impl
@@ -93,6 +113,34 @@ public class UserServiceImplTest {
 
     @Test
     public void test(){
+
+    }
+
+    @Test
+    public void should_list_all_users(){
+        // code under test is listAllUsers (userRepository, userMapper)
+
+        //given part - preparation
+        when(userRepository.findAllByIsDeletedOrderByFirstNameDesc(false)).thenReturn(getUsers());
+
+        // expended way
+        when(userMapper.convertToDto(user)).thenReturn(userDTO);
+        when(userMapper.convertToDto(getUsers().get(1))).thenReturn(getUserDTOs().get(1));
+
+        //shorter way -> same as previous two lines
+        // -> follows the order, first when it runs it goes with DTO, second with getUserDTOs().get(1) as a second parameter and so on...
+        //when(userMapper.convertToDto(any(User.class))).thenReturn(userDTO, getUserDTOs().get(1), third parameter...);
+
+        List<UserDTO> expectedList = getUserDTOs();
+
+        // when part - action
+        List<UserDTO> actualList = userService.listAllUsers();
+
+        //then part - Assertion/Verification
+        assertEquals(expectedList, actualList);
+
+        //assertEquals(new User(), new User()); // comparing addresses of obj with ==,
+        // will work if we add @EqualsAndHashCode on the top of a class whose objects we are going to test.
 
     }
 
