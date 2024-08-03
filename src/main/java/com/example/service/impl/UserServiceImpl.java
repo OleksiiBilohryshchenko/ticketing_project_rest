@@ -81,7 +81,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO update(UserDTO user) {
-
+        user.setPassWord(passwordEncoder.encode(user.getPassWord()));
         //Find current user
         User user1 = userRepository.findByUserNameAndIsDeleted(user.getUserName(), false);  //has id
         //Map update user dto to entity object
@@ -89,9 +89,9 @@ public class UserServiceImpl implements UserService {
         //set id to the converted object
         convertedUser.setId(user1.getId());
         //save the updated user in the db
-        userRepository.save(convertedUser);
+        User updatedUser = userRepository.save(convertedUser);
 
-        return findByUserName(user.getUserName());
+        return userMapper.convertToDto(updatedUser);
 
     }
 
