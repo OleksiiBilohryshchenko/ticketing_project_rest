@@ -18,8 +18,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -152,6 +154,26 @@ public class UserServiceImplTest {
 
     }
 
+    @Test
+    public void should_throw_nosuchelementexception_when_user_not_found(){
+        //given
+        // checking if (user == null) throw new NoSuchElementException("User not found.");
+//        when(userRepository.findByUserNameAndIsDeleted(anyString(),anyBoolean())).thenReturn(null); -> not really correct to do in our case
+//        when(userMapper.convertToDto(any(User.class))).thenReturn(userDTO); -> also not really correct in our case
+
+        // any() we use only if it related with Mockito library
+
+        // when and then step will be in one step
+        Throwable actualException = assertThrows(NoSuchElementException.class, () -> userService.findByUserName("Someusername"));
+
+//        Throwable actualException = assertThrowsExactly(RuntimeException.class, () -> userService.findByUserName("Someusername")); // fail, should be exactly RunTimeException
+
+        assertEquals("User not found.", actualException.getMessage());
+
+        //AssertJ    for catching an exception only
+//        Throwable actualException = catchThrowable(() -> userService.findByUserName("Someusername"));
+
+    }
 
 
 }
