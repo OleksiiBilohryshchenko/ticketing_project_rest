@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -50,6 +51,9 @@ public class UserServiceImplTest {
 
     @Mock
     private KeycloakService keycloakService;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks // inject all above mocks
     private UserServiceImpl userService; // since there is no bean without running an app we need use UserServiceImpl directly
@@ -187,7 +191,28 @@ public class UserServiceImplTest {
     //	3 - Passwords encoding should be implemented consistently throughout the application,
     //	including any password reset or change functionality.
 
+    @Test
+    void should_encode_user_password_on_save_operation() {
 
+        // given
+        when(userMapper.convertToEntity(any(UserDTO.class))).thenReturn(user);
+        when(userRepository.save(any())).thenReturn(user);
+        when(userMapper.convertToDto(any(User.class))).thenReturn(userDTO);
+        when(passwordEncoder.encode(anyString())).thenReturn("some-password");
+
+        String expectedPassword = "some-password";
+
+        // when
+        UserDTO savedUser = userService.save(userDTO);
+
+        // then
+
+        assertEquals(expectedPassword, savedUser.getPassWord());
+
+        // verify that passwordEncoder is executed
+        verify(passwordEncoder, times(1)).encode(anyString());
+
+    }
 
 
 }

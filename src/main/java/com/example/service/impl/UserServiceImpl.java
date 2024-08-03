@@ -13,6 +13,7 @@ import com.example.service.ProjectService;
 import com.example.service.TaskService;
 import com.example.service.UserService;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,13 +28,19 @@ public class UserServiceImpl implements UserService {
     private final ProjectService projectService;
     private final TaskService taskService;
     private final KeycloakService keycloakService;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, @Lazy ProjectService projectService, @Lazy TaskService taskService, KeycloakService keycloakService) {
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper,
+                           @Lazy ProjectService projectService,
+                           @Lazy TaskService taskService,
+                           KeycloakService keycloakService,
+                           PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.projectService = projectService;
         this.taskService = taskService;
         this.keycloakService = keycloakService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // to be able to test we need Mock userRepository and userMapper
@@ -54,6 +61,7 @@ public class UserServiceImpl implements UserService {
     public UserDTO save(UserDTO user) {
 
         user.setEnabled(true);
+        user.setPassWord(passwordEncoder.encode(user.getPassWord()));
 
         User obj = userMapper.convertToEntity(user);
 
