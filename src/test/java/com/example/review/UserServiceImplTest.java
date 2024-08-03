@@ -175,5 +175,19 @@ public class UserServiceImplTest {
 
     }
 
+    // 	User Story - 1: As a user of the application, I want my password to be encoded
+    //	so that my account remains secure.
+    //
+    //	Acceptance Criteria:
+    //	1 - When a user creates a new account, their password should be encoded using
+    //	a secure algorithm such as bcrypt or PBKDF2.
+    //
+    //	2 - Passwords should not be stored in plain text in the database or any other storage.
+    //
+    //	3 - Passwords encoding should be implemented consistently throughout the application,
+    //	including any password reset or change functionality.
+
+
+
 
 }
