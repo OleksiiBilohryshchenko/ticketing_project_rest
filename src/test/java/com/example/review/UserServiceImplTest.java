@@ -1,9 +1,12 @@
 package com.example.review;
 
+import com.example.dto.ProjectDTO;
 import com.example.dto.RoleDTO;
+import com.example.dto.TaskDTO;
 import com.example.dto.UserDTO;
 import com.example.entity.Role;
 import com.example.entity.User;
+import com.example.exception.TicketingProjectException;
 import com.example.mapper.UserMapper;
 import com.example.repository.UserRepository;
 import com.example.service.KeycloakService;
@@ -13,11 +16,14 @@ import com.example.service.impl.UserServiceImpl;
 import org.aspectj.lang.annotation.Before;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -103,6 +109,19 @@ public class UserServiceImplTest {
         user.setFirstName("Emily");
 
         return List.of(user, user2);
+    }
+
+    private User getUserWithRole(String role){
+
+        User user3 = new User();
+
+        user3.setUserName("user3");
+        user3.setPassWord("Abc1");
+        user3.setEnabled(true);
+        user3.setIsDeleted(false);
+        user3.setRole(new Role(role));
+
+        return user3;
     }
 
     private List<UserDTO> getUserDTOs(){
@@ -237,7 +256,133 @@ public class UserServiceImplTest {
 
     }
 
+    // 	User Story 2: As an admin, I shouldn't be able to delete a manager user,
+    // 	if that manager has projects linked to them to prevent data loss.
+    //
+    //	Acceptance Criteria:
+    //
+    //	1 - The system should prevent a manager user from being deleted
+    //	if they have projects linked to them.
+    //	2 - An error message should be displayed to the user if they attempt
+    //	to delete a manager user with linked projects.
+    //
+    //	User Story 3: As an admin, I shouldn't be able to delete an employee user,
+    //	if that employee has tasks linked to them to prevent data loss.
+    //
+    //	Acceptance Criteria:
+    //
+    //	1 - The system should prevent an employee user from being deleted
+    //	if they have tasks linked to them.
+    //	2 - An error message should be displayed to the user if they attempt
+    //	to delete an employee user with linked tasks.
 
+    @Test
+    void should_delete_manager() throws TicketingProjectException {
+
+        // given - Preparation
+        User managerUser = getUserWithRole("Manager");
+
+        when(userRepository.findByUserNameAndIsDeleted(anyString(), anyBoolean())).thenReturn(managerUser);
+        when(userRepository.save(any())).thenReturn(managerUser);
+        when(projectService.listAllNonCompletedByAssignedManager(any())).thenReturn(new ArrayList<>());
+
+        // when - Action
+        userService.delete(managerUser.getUserName());
+
+        // then - Assertion/Verification
+        assertTrue(managerUser.getIsDeleted());
+        assertNotEquals("user3", managerUser.getUserName());
+
+    }
+
+    @Test
+    void should_delete_employee() throws TicketingProjectException {
+
+        // given - Preparation
+        User employeeUser = getUserWithRole("Employee");
+
+        when(userRepository.findByUserNameAndIsDeleted(anyString(), anyBoolean())).thenReturn(employeeUser);
+        when(userRepository.save(any())).thenReturn(employeeUser);
+        when(taskService.listAllNonCompletedByAssignedEmployee(any())).thenReturn(new ArrayList<>());
+
+        // when - Action
+        userService.delete(employeeUser.getUserName());
+
+        // then - Assertion/Verification
+        assertTrue(employeeUser.getIsDeleted());
+        assertNotEquals("user3", employeeUser.getUserName());
+
+    }
+
+    // not the best practise to use
+    @ParameterizedTest
+    @ValueSource(strings = {"Manager", "Employee"})
+    void should_delete_user(String role) throws TicketingProjectException {
+
+        // given - Preparation
+        User testUser = getUserWithRole(role);
+
+        when(userRepository.findByUserNameAndIsDeleted(anyString(), anyBoolean())).thenReturn(testUser);
+        when(userRepository.save(any())).thenReturn(testUser);
+
+//        when(projectService.listAllNonCompletedByAssignedManager(any())).thenReturn(new ArrayList<>());
+//        when(taskService.listAllNonCompletedByAssignedEmployee(any())).thenReturn(new ArrayList<>());
+
+//        if (testUser.getRole().getDescription().equals("Manager")) {
+//            when(projectService.listAllNonCompletedByAssignedManager(any())).thenReturn(new ArrayList<>());
+//        } else if (testUser.getRole().getDescription().equals("Employee")) {
+//            when(taskService.listAllNonCompletedByAssignedEmployee(any())).thenReturn(new ArrayList<>());
+//        }
+
+        lenient().when(projectService.listAllNonCompletedByAssignedManager(any())).thenReturn(new ArrayList<>());
+        lenient().when(taskService.listAllNonCompletedByAssignedEmployee(any())).thenReturn(new ArrayList<>());
+
+        // when - Action
+        userService.delete(testUser.getUserName());
+
+        // then - Assertion/Verification
+        assertTrue(testUser.getIsDeleted());
+        assertNotEquals("user3", testUser.getUserName());
+
+    }
+
+    @Test
+    void should_throw_exception_when_deleting_manager_with_project() {
+
+        User managerUser = getUserWithRole("Manager");
+
+        when(userRepository.findByUserNameAndIsDeleted(anyString(), anyBoolean())).thenReturn(managerUser);
+        when(projectService.listAllNonCompletedByAssignedManager(any())).thenReturn(List.of(new ProjectDTO(), new ProjectDTO()));
+
+        Throwable actualException = assertThrows(TicketingProjectException.class, () -> userService.delete(managerUser.getUserName()));
+
+        assertEquals("User can not be deleted", actualException.getMessage());
+
+    }
+
+    @Test
+    void should_throw_exception_when_deleting_employee_with_task() {
+
+        User employeeUser = getUserWithRole("Employee");
+
+        when(userRepository.findByUserNameAndIsDeleted(anyString(), anyBoolean())).thenReturn(employeeUser);
+        when(taskService.listAllNonCompletedByAssignedEmployee(any())).thenReturn(List.of(new TaskDTO(), new TaskDTO()));
+
+        Throwable actualException = assertThrows(TicketingProjectException.class, () -> userService.delete(employeeUser.getUserName()));
+
+        assertEquals("User can not be deleted", actualException.getMessage());
+
+    }
+
+    //	User Story 4: As an admin, I shouldn't be able to delete an admin user,
+    //	if that admin is the last admin in the system.
+    //
+    //	Acceptance Criteria:
+    //
+    //	1 - The system should prevent an admin user from being deleted
+    //	if it is the last admin.
+    //	2 - An error message should be displayed to the user if there is an
+    //	attempt to delete the last admin user.
 
 
 }
